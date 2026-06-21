@@ -1,0 +1,17 @@
+ai-agent-499017-6ddd73af9188.json
+credentials.json 
+.env
+AI_Agent_Data/ 
+*.docx
+*.eml
+
+__pycache__/
+*.pyc
+.venv/
+lc-academy-env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
