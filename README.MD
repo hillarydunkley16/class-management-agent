@@ -1,37 +1,47 @@
-Class Management AI Agent
 
-Phase one:
+# Teaching Assistant Agent
 
-Organizing data into something a LLM can easily query.
+A LangGraph-based agent that tracks lesson progress across multiple classes,
+so you never have to guess (or accidentally repeat) what you taught last time.
 
-Previously schedule information was organized into docx files which contained tables
+Built from a real problem: as an English teaching assistant working with
+35 classes a week, each on its own pace through a shared curriculum, I kept
+losing track of where I'd left off with a given class. This agent answers
+one question reliably: **"What did I do last time with this class, and
+what should I do today?"**
 
-schedule variations were communicated via email
+Full writeup, including the architecture decisions and the bugs that taught
+me the most, is here: [link to Substack post]
 
-First needed to anonymize docx and emails - done with scripts
+## How it works
 
-Second needed to parse docx files into json, done with an AI generated script
+- **LangGraph** runs the agent loop: a single agent node reasons about the
+  request and calls tools as needed, looping until it has enough to answer.
+- **Google Sheets** is the source of truth for everything that needs to
+  persist across sessions — class info, curriculum, lesson progress,
+  assignments, and schedule variations. LangGraph's own checkpointing
+  handles only the in-session conversational memory.
+- **Bilingual email parsing** turns real, messy Italian/English schedule
+  change emails into structured rows, with validation at the boundary so
+  malformed or unrecognized class IDs get rejected rather than silently
+  written.
 
-Third upload parsed data to google sheets, also done with AI generated script
+## Data
 
-First tested out llm's abilities to edit google sheets through Google Sheets ipynb. This was successful.
+All real schedule, class, and correspondence data is excluded from this
+repo (see `.gitignore`). `fixtures/anonymized/` contains fictional sample
+data in the same shape, so the schema and parsing logic can be understood
+without any real information.
 
-The 'schedule' tab has columns for 'month', 'week', 'day', 'time_start', 'time_end', 'class_id', 'teacher', 'note' and 'version'
+## Setup
 
-The 'variations' tab has columns for 'date', 'class_id', 'change_type', 'detail', and 'source_email'
+Requires a Google Cloud service account with Sheets + Drive API access,
+and an OpenAI API key. See `.env.example` for required environment
+variables.
 
-Answering a basic question about schedule is using up way too many tokens. 
+## Build log
 
-Instead of having a basic read_sheet, which will read the entire sheet and use many tokens, have specific tools/helper functions that are specific to each tab 
-
-get_class_info(class_id)
-get_progress(class_id)
-get_assignments(class_id)
-get_schedule_for_day(date)
-find_variations(date)
-
-Right now the llm can't get the classes for a specific day based off the google sheet set up 
-
-Either need to restructure the google sheet so each individual day is accounted for 
-
-Or need the llm to figure out which day of the month belongs with which row/day of the week.
+This project's earlier working notes — including the original data
+modeling decisions and a few problems solved along the way — are kept in
+[`BUILD_LOG.md`](./BUILD_LOG.md) for anyone curious about the messier,
+real-time version of the process.
