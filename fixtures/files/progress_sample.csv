@@ -1,0 +1,5 @@
+class_id,lesson_number,status,last_slide,date,notes
+2A LSS,3,in_progress,9,2026-03-04,
+3B TEC,2,completed,,2026-02-20,
+1C LSE,1,not_started,,,
+2D MAF,4,skipped,,,covered by homework instead

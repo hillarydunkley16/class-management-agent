@@ -1,0 +1,4 @@
+date,class_id,change_type,detail,source_email
+2026-03-05,3B TEC,cancelled,school trip - whole class out for the day,sample_email_1.eml
+2026-03-12,2A LSS,rescheduled,moved from Tuesday to Friday same week due to a test,sample_email_2.eml
+2026-03-18,1C LSE,substitution,covered by substitute teacher while regular teacher was absent,sample_email_2.eml

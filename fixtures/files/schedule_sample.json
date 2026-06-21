@@ -1,0 +1,68 @@
+[
+  {
+    "month": "March",
+    "week": "3rd-7th",
+    "day": "MONDAY",
+    "time_start": 8,
+    "time_end": 9,
+    "class_id": "2A LSS",
+    "teacher": "Rossi",
+    "note": "",
+    "version": "original"
+  },
+  {
+    "month": "March",
+    "week": "3rd-7th",
+    "day": "MONDAY",
+    "time_start": 9,
+    "time_end": 10,
+    "class_id": "",
+    "teacher": "",
+    "note": "prep",
+    "version": "original"
+  },
+  {
+    "month": "March",
+    "week": "3rd-7th",
+    "day": "TUESDAY",
+    "time_start": 10,
+    "time_end": 11,
+    "class_id": "3B TEC",
+    "teacher": "Bianchi",
+    "note": "",
+    "version": "original"
+  },
+  {
+    "month": "March",
+    "week": "3rd-7th",
+    "day": "WEDNESDAY",
+    "time_start": 11,
+    "time_end": 12,
+    "class_id": "",
+    "teacher": "",
+    "note": "Meeting with the tutor",
+    "version": "original"
+  },
+  {
+    "month": "March",
+    "week": "3rd-7th",
+    "day": "FRIDAY",
+    "time_start": 12,
+    "time_end": 13,
+    "class_id": "1C LSE",
+    "teacher": "Ferri",
+    "note": "",
+    "version": "original"
+  },
+  {
+    "month": "March",
+    "week": "3rd-7th",
+    "day": "SATURDAY",
+    "time_start": 8,
+    "time_end": 9,
+    "class_id": "",
+    "teacher": "",
+    "note": "off",
+    "version": "original"
+  }
+]
