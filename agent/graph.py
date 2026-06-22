@@ -15,9 +15,10 @@ import os
 from agent.tools import sheets as sh
 from agent.tools import helpers as hlp
 from agent.state import AgentState
+import streamlit as st
 load_dotenv()
 
-import streamlit as st
+
 
 try:
     SHEET_ID = st.secrets["SHEET_ID"]
@@ -27,7 +28,7 @@ except Exception:
                       
 tools = [sh.get_variations_for_date, sh.class_info, sh.update_progress, sh.get_next_lesson, sh.get_schedule_for_date, sh.read_sheet, sh.update_assignment]
 
-model = ChatOpenAI(model="gpt-4o", temperature=0)
+model = ChatOpenAI(model="gpt-4o", api_key = st.secrets["OPENAI_API_KEY"], temperature=0)
 model_with_tools = model.bind_tools(tools)
 
 tool_node = ToolNode(tools)
