@@ -5,7 +5,7 @@ A LangGraph-based agent that tracks lesson progress across multiple classes,
 so you never have to guess (or accidentally repeat) what you taught last time.
 
 Built from a real problem: as an English teaching assistant working with
-35 classes a week, each on its own pace through a shared curriculum, I kept
+10 classes a week, each on its own pace through a shared curriculum, I kept
 losing track of where I'd left off with a given class. This agent answers
 one question reliably: **"What did I do last time with this class, and
 what should I do today?"**
