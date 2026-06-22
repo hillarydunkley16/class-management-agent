@@ -18,7 +18,7 @@ credentials = Credentials.from_service_account_info(
     st.secrets["gcp_service_account"],
     scopes=SCOPES
 )
-gc = gspread.authorize(credentials)# Read the full schedule tab once      
+gc = gspread.authorize(credentials)    
 @tool
 def read_sheet(spreadsheet_id: str, sheet_name: str) -> list:
     """Reads all data from a worksheet given its ID."""
@@ -90,7 +90,11 @@ def get_schedule_for_date(query_date: str, spreadsheet_id: str) -> list:
     'original' when both exist for the same week.
     """
     d = datetime.strptime(query_date, "%Y-%m-%d").date()
-
+    credentials = Credentials.from_service_account_info(
+    st.secrets["gcp_service_account"],
+    scopes=SCOPES
+)
+    gc = gspread.authorize(credentials)   
     # Read the full schedule tab once
     gc_spreadsheet = gc.open_by_key(spreadsheet_id)
     ws = gc_spreadsheet.worksheet("schedule")
