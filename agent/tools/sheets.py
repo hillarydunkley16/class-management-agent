@@ -5,7 +5,7 @@ from datetime import datetime
 import calendar
 import re
 from langgraph.types import interrupt
-
+import streamlit as st
 from agent.tools.helpers import date_to_week_range, normalise_class_id
 # Define the scope
 SCOPES = [
@@ -14,8 +14,10 @@ SCOPES = [
 ]
 
 # Authorize gspread
-credentials = Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
-gc = gspread.authorize(credentials)
+credentials = Credentials.from_service_account_info(
+    st.secrets["gcp_service_account"],
+    scopes=SCOPES
+)
 @tool
 def read_sheet(spreadsheet_id: str, sheet_name: str) -> list:
     """Reads all data from a worksheet given its ID."""
