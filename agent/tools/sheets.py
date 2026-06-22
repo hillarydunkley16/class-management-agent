@@ -18,6 +18,7 @@ credentials = Credentials.from_service_account_info(
     st.secrets["gcp_service_account"],
     scopes=SCOPES
 )
+gc = gspread.authorize(credentials)# Read the full schedule tab once      
 @tool
 def read_sheet(spreadsheet_id: str, sheet_name: str) -> list:
     """Reads all data from a worksheet given its ID."""
