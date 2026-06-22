@@ -18,7 +18,8 @@ from agent.state import AgentState
 import streamlit as st
 load_dotenv()
 
-
+os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
+st.write(st.secrets.keys())
 
 try:
     SHEET_ID = st.secrets["SHEET_ID"]
