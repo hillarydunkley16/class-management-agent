@@ -16,7 +16,13 @@ from agent.tools import sheets as sh
 from agent.tools import helpers as hlp
 from agent.state import AgentState
 load_dotenv()
-SHEET_ID = os.getenv('SHEET_ID')
+
+import streamlit as st
+
+try:
+    SHEET_ID = st.secrets["SHEET_ID"]
+except Exception:
+    SHEET_ID = os.getenv("SHEET_ID")
 
                       
 tools = [sh.get_variations_for_date, sh.class_info, sh.update_progress, sh.get_next_lesson, sh.get_schedule_for_date, sh.read_sheet, sh.update_assignment]
