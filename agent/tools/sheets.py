@@ -55,17 +55,17 @@ def normalise_class_id(class_id: str) -> str:
 # ---------------------------
 # HELPERS (UNCHANGED LOGIC)
 # ---------------------------
-def level_matches(curriculum_level: str, class_level: str) -> bool:
-    curriculum_level = str(curriculum_level).strip().lower()
-    class_level = str(class_level).strip().lower()
+# def level_matches(curriculum_level: str, class_level: str) -> bool:
+#     curriculum_level = str(curriculum_level).strip().lower()
+#     class_level = str(class_level).strip().lower()
 
-    if curriculum_level == "all":
-        return True
+#     if curriculum_level == "all":
+#         return True
 
-    levels = [
-        x.strip()
-        for x in curriculum_level.split("/")
-    ]
+#     levels = [
+#         x.strip()
+#         for x in curriculum_level.split("/")
+#     ]
 
 
 def get_curriculum_lesson(curriculum_records, lesson_number, class_level):
@@ -132,6 +132,7 @@ def get_next_lesson(
     override_status: str = None,
     override_last_slide: str = None,
 ):
+    """Gets the next lesson in a curriculum of a given class. There are 10 lessons in the curriculum. If a class level is not appropriate, still suggest a lesson."""
 
     gc_spreadsheet = gc.open_by_key(spreadsheet_id)
 
@@ -224,7 +225,7 @@ def get_next_lesson(
 
 @tool
 def update_progress(class_id: str, spreadsheet_id: str, updates: dict):
-
+    """Updates the progress of a given class"""
     gc_spreadsheet = gc.open_by_key(spreadsheet_id)
     
 
@@ -259,7 +260,7 @@ def update_progress(class_id: str, spreadsheet_id: str, updates: dict):
 
 @tool
 def update_assignment(spreadsheet_id: str, class_id: str, updates: dict):
-
+    """Updates an assignment of a given class"""
     gc_spreadsheet = gc.open_by_key(spreadsheet_id)
 
     class_id = normalise_class_id(class_id)
