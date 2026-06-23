@@ -15,19 +15,27 @@ import os
 from agent.tools import sheets as sh
 from agent.tools import helpers as hlp
 from agent.state import AgentState
+from agent.tools.class_lookup import ClassIndex
 import streamlit as st
 load_dotenv()
 
 os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
-st.write(st.secrets.keys())
 
+_class_index = None
 try:
     SHEET_ID = st.secrets["SHEET_ID"]
 except Exception:
     SHEET_ID = os.getenv("SHEET_ID")
 
-                      
-tools = [sh.get_variations_for_date, sh.class_info, sh.update_progress, sh.get_next_lesson, sh.get_schedule_for_date, sh.read_sheet, sh.update_assignment]
+def get_class_index(ws):
+    global _class_index
+
+    if _class_index is None:
+        class_list = [row[0] for row in ws.get_all_values()[1:] if row]
+        _class_index = ClassIndex(class_list)
+
+    return _class_index                      
+tools = [ sh.class_info, sh.update_progress, sh.get_next_lesson, sh.update_assignment, sh.get_progress]
 
 model = ChatOpenAI(model="gpt-4o", api_key = st.secrets["OPENAI_API_KEY"], temperature=0)
 model_with_tools = model.bind_tools(tools)

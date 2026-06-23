@@ -123,7 +123,26 @@ def class_info(spreadsheet_id: str, class_id: str) -> list:
 
     return [progress, assignments]
 
+@tool 
+def get_progress(
+    class_id: str, 
+    spreadsheet_id: str
 
+): 
+    gc_spreadsheet = gc.open_by_key(spreadsheet_id)
+
+    class_id = normalise_class_id(class_id)
+
+    ws_progress = gc_spreadsheet.worksheet("progress")
+    progress_records = ws_progress.get_all_records()
+    class_progress = next(
+        (r for r in progress_records if r["class_id"] == class_id),
+        None
+    )
+
+    if not class_progress:
+        return {"error": f"No progress found for {class_id}"}
+    
 @tool
 def get_next_lesson(
     class_id: str,
