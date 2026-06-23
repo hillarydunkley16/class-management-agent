@@ -271,13 +271,16 @@ def get_next_lesson(
     # CASE 1: Resume lesson
 
     if status == "in_progress":
-
+        print("CLASS:", class_id)
+        print("LEVEL:", level)
+        print("STATUS:", status)
+        print("LESSON:", lesson_number)
         lesson = get_curriculum_lesson(
             curriculum_records,
             lesson_number,
             level,
         )
-
+        print("LOOKUP RESULT:", lesson)
         if not lesson:
             return {
                 "error":
@@ -316,12 +319,16 @@ def get_next_lesson(
                 "message":
                     "All lessons completed"
             }
-
+        print("CLASS:", class_id)
+        print("LEVEL:", level)
+        print("STATUS:", status)
+        print("LESSON:", lesson_number)
         lesson = get_curriculum_lesson(
             curriculum_records,
             next_lesson,
             level,
         )
+        print("LOOKUP RESULT:", lesson)
 
         if not lesson:
             return {
