@@ -61,32 +61,34 @@ def read_sheet(spreadsheet_id: str, sheet_name: str) -> list:
     return worksheet.get_all_records()
 
 
-@tool 
+@tool
 def get_variations_for_date(query_date: str, spreadsheet_id: str) -> list:
     """
-    Returns the variations for a specific date (YYYY-MM-DD format).  
+    Returns variations that apply to a specific date.
     """
+    gc_spreadsheet = gc.open_by_key(spreadsheet_id)
+
+    # read schedule rows
+    schedule_ws = gc_spreadsheet.worksheet("schedule")
+    schedule_rows = schedule_ws.get_all_records()
+
     d = datetime.strptime(query_date, "%Y-%m-%d").date()
 
-    # Read the full schedule tab once
-    gc_spreadsheet = gc.open_by_key(spreadsheet_id)
-    ws = gc_spreadsheet.worksheet("variations")
-    schedule_rows = ws.get_all_records()
     result = date_to_week_range(d, schedule_rows)
+
     if not result:
         return [{"error": f"No schedule data found covering {query_date}"}]
-    month, week = result
-    day_name = d.strftime("%A").upper()
 
-    # Filter to matching month/week/day
+    # now read variations
+    variations_ws = gc_spreadsheet.worksheet("variations")
+    variation_rows = variations_ws.get_all_records()
+
     matches = [
-        r for r in schedule_rows
-        if r["month"] == month
-        and r["week"] == week
-        and r["day"] == day_name
+        r for r in variation_rows
+        if r.get("date") == query_date
     ]
-    return matches if matches else [{"info": f"No variations data found covering {query_date}"}]
 
+    return matches
 
 
 def _get_class_progress(spreadsheet_id: str,  class_id: str) -> list: 
