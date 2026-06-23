@@ -13,9 +13,7 @@ SCOPES = [
     'https://www.googleapis.com/auth/drive'
 ]
 
-# ---------------------------
-# AUTH
-# ---------------------------
+# Authorize gspread
 credentials = Credentials.from_service_account_info(
     st.secrets["gcp_service_account"],
     scopes=SCOPES
@@ -64,8 +62,9 @@ def level_matches(curriculum_level: str, class_level: str) -> bool:
     if curriculum_level == "all":
         return True
 
-    return class_level in [
-        x.strip() for x in curriculum_level.split("/")
+    levels = [
+        x.strip()
+        for x in curriculum_level.split("/")
     ]
 
 
