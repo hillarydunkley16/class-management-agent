@@ -129,6 +129,9 @@ def get_progress(
     spreadsheet_id: str
 
 ): 
+    """
+    Returns the progress record of a given class
+    """
     gc_spreadsheet = gc.open_by_key(spreadsheet_id)
 
     class_id = normalise_class_id(class_id)
