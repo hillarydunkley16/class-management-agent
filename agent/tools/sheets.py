@@ -89,8 +89,42 @@ def get_variations_for_date(query_date: str, spreadsheet_id: str) -> list:
     ]
 
     return matches
+def level_matches(curriculum_level: str, class_level: str) -> bool:
+    curriculum_level = str(curriculum_level).strip().lower()
+    class_level = str(class_level).strip().lower()
 
+    if curriculum_level == "all":
+        return True
 
+    levels = [
+        x.strip()
+        for x in curriculum_level.split("/")
+    ]
+
+    return class_level in levels
+
+def get_curriculum_lesson(
+    curriculum_records,
+    lesson_number,
+    class_level,
+):
+    for row in curriculum_records:
+
+        try:
+            row_lesson = int(row["lesson_number"])
+        except Exception:
+            continue
+
+        if row_lesson != lesson_number:
+            continue
+
+        if level_matches(
+            row.get("level", ""),
+            class_level,
+        ):
+            return row
+
+    return None
 def _get_class_progress(spreadsheet_id: str,  class_id: str) -> list: 
     """Get progress for a given class in the 'progress' tab"""
     spreadsheet = gc.open_by_key(spreadsheet_id)
@@ -163,7 +197,7 @@ def get_schedule_for_date(query_date: str, spreadsheet_id: str) -> list:
     return classes if classes else [{"info": f"No classes scheduled on {query_date}"}]
 
 
-@tool 
+@tool
 def get_next_lesson(
     class_id: str,
     spreadsheet_id: str,
@@ -171,95 +205,148 @@ def get_next_lesson(
     override_last_slide: str = None,
 ):
     """
-    Returns what a class should do next: either where to resume an
-    in-progress lesson, or the next lesson in the curriculum if the
-    previous one was completed.
-
-    If this is being called right after update_progress in the same turn,
-    pass override_status and override_last_slide with the values you just
-    wrote, so this tool doesn't depend on re-reading the Sheet (which may
-    not yet reflect the write due to call ordering/timing).
+    Returns the next teaching action for a class.
     """
+
     class_id = normalise_class_id(class_id)
+
     gc_spreadsheet = gc.open_by_key(spreadsheet_id)
-    ws_curriculum = gc_spreadsheet.worksheet("curriculum")
+
     ws_progress = gc_spreadsheet.worksheet("progress")
     ws_classes = gc_spreadsheet.worksheet("classes")
+    ws_curriculum = gc_spreadsheet.worksheet("curriculum")
 
     progress_records = ws_progress.get_all_records()
-    
-    class_progress = next(
-        (r for r in progress_records if r.get("class_id") == class_id),
-        None
-    )
-    if class_progress is None:
-        return f"No progress record found for {class_id}"
-
-    # Use overrides if provided, otherwise fall back to what was read from the Sheet
-    status = override_status if override_status is not None else class_progress.get("status")
-    last_slide = override_last_slide if override_last_slide is not None else class_progress.get("last_slide")
-    lesson_number = class_progress.get("lesson_number")
-
-    # Need the class's level to pick the right curriculum variant
     class_records = ws_classes.get_all_records()
-    class_info = next(
-        (r for r in class_records if r.get("class_id") == class_id),
-        None
-    )
-    level = class_info.get("level") if class_info else None
-
     curriculum_records = ws_curriculum.get_all_records()
 
-    def get_lesson(lesson_num):
-        """Find the curriculum row for a lesson, matching level or 'all'."""
-        candidates = [
-            r for r in curriculum_records
-            if int(r.get("lesson_number")) == lesson_num
-            and (r.get("level", "").strip().lower() in ("all", (level or "").lower()))
-        ]
-        return candidates[0] if candidates else None
+    class_progress = next(
+        (
+            r
+            for r in progress_records
+            if normalise_class_id(r.get("class_id", ""))
+            == class_id
+        ),
+        None,
+    )
+
+    if not class_progress:
+        return {
+            "error": f"No progress found for {class_id}"
+        }
+
+    class_info = next(
+        (
+            r
+            for r in class_records
+            if normalise_class_id(r.get("class_id", ""))
+            == class_id
+        ),
+        None,
+    )
+
+    if not class_info:
+        return {
+            "error": f"No class information found for {class_id}"
+        }
+
+    level = class_info.get("level")
+
+    status = (
+        override_status
+        if override_status is not None
+        else class_progress.get("status")
+    )
+
+    last_slide = (
+        override_last_slide
+        if override_last_slide is not None
+        else class_progress.get("last_slide")
+    )
+
+    lesson_number = int(
+        class_progress.get("lesson_number")
+    )
+
+    # CASE 1: Resume lesson
 
     if status == "in_progress":
-        lesson = get_lesson(int(lesson_number))
-        if lesson is None:
-            return f"Lesson {lesson_number} not found in curriculum for level {level}"
+
+        lesson = get_curriculum_lesson(
+            curriculum_records,
+            lesson_number,
+            level,
+        )
+
+        if not lesson:
+            return {
+                "error":
+                f"Lesson {lesson_number} not found"
+            }
+
         return {
             "action": "resume",
             "class_id": class_id,
             "level": level,
             "lesson_number": lesson_number,
-            "topic": lesson.get("topic"),
+            "topic": lesson["topic"],
+            "slides_url": lesson["slides_url"],
             "last_slide": last_slide,
-            "slides_url": lesson.get("slides_url"),
-            "instruction": f"Resume lesson {lesson_number} ({lesson.get('topic')}) from slide {last_slide}"
+            "instruction":
+                f"Resume lesson {lesson_number} "
+                f"({lesson['topic']}) "
+                f"from slide {last_slide}",
         }
 
-    elif status == "completed":
-        next_lesson_number = int(lesson_number) + 1
-        lesson = get_lesson(next_lesson_number)
-        if lesson is None:
-            return "Finished all lessons in curriculum"
+    # CASE 2: Completed lesson
+
+    if status == "completed":
+
+        next_lesson = lesson_number + 1
+
+        max_lesson = max(
+            int(r["lesson_number"])
+            for r in curriculum_records
+        )
+
+        if next_lesson > max_lesson:
+            return {
+                "action": "curriculum_complete",
+                "class_id": class_id,
+                "message":
+                    "All lessons completed"
+            }
+
+        lesson = get_curriculum_lesson(
+            curriculum_records,
+            next_lesson,
+            level,
+        )
+
+        if not lesson:
+            return {
+                "error":
+                    f"Lesson {next_lesson} exists "
+                    f"but no matching level "
+                    f"was found ({level})"
+            }
+
         return {
             "action": "start_new",
             "class_id": class_id,
             "level": level,
-            "lesson_number": next_lesson_number,
-            "topic": lesson.get("topic"),
-            "slides_url": lesson.get("slides_url"),
-            "instruction": f"Start lesson {next_lesson_number} ({lesson.get('topic')})"
+            "lesson_number": next_lesson,
+            "topic": lesson["topic"],
+            "slides_url": lesson["slides_url"],
+            "instruction":
+                f"Start lesson {next_lesson} "
+                f"({lesson['topic']})",
         }
 
-    else:
-        return f"Unrecognized status '{status}' for {class_id}"
-# @tool 
-# def get_lesson_progress(class_id: str, spreadsheet_id: str): 
-#     """Evaluate how far the teacher is in the lesson
-#         Go to curriculum and get lesson_number, status
-#         If status is in_progress get last_slide 
-#         Go to curriculum and find the lesson number, get url 
-#         Parse url using google slides api 
-#         Get total number of slides and calculate percentage progress in the lesson (i.e. slide 9 of 12 means you are 75% finished with the lesson)
-#     """
+    return {
+        "error":
+            f"Unknown status '{status}'"
+    }
 @tool 
 def update_progress(class_id: str, spreadsheet_id: str, updates: dict ): 
     """
