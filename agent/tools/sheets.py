@@ -9,11 +9,25 @@ import streamlit as st
 from agent.tools.helpers import date_to_week_range, normalise_class_id
 import re
 from datetime import datetime, date
+from agent.tools.class_lookup import ClassIndex, canonicalize_class_id
 SCOPES = [
     'https://www.googleapis.com/auth/spreadsheets',
     'https://www.googleapis.com/auth/drive'
 ]
+_class_index_cache = {}
+def get_class_index(gc_spreadsheet):
+    key = gc_spreadsheet.id
 
+    if key in _class_index_cache:
+        return _class_index_cache[key]
+
+    ws = gc_spreadsheet.worksheet("classes")
+    class_list = [row[0] for row in ws.get_all_values()[1:] if row]
+
+    index = ClassIndex(class_list)
+    _class_index_cache[key] = index
+
+    return index
 # Authorize gspread
 credentials = Credentials.from_service_account_info(
     st.secrets["gcp_service_account"],
@@ -146,7 +160,18 @@ def class_info(spreadsheet_id: str, class_id: str) -> list:
     """
     Fetches the most recent information about a specific class from progress and assignments 
     """
-    class_id = normalise_class_id(class_id)
+    gc_spreadsheet = gc.open_by_key(spreadsheet_id)
+
+    # 1. get or build index
+    class_index = get_class_index(gc_spreadsheet)
+
+    # 2. resolve messy input → canonical sheet ID
+    resolved = class_index.resolve(class_id)
+
+    if resolved is None:
+        raise ValueError(f"Unknown class_id: {class_id}")
+
+    class_id = resolved["resolved"]
     progress = _get_class_progress(spreadsheet_id, class_id) 
     assignments = _get_assignments(spreadsheet_id, class_id)
     return [progress, assignments]
@@ -207,10 +232,15 @@ def get_next_lesson(
     """
     Returns the next teaching action for a class.
     """
-
-    class_id = normalise_class_id(class_id)
-
     gc_spreadsheet = gc.open_by_key(spreadsheet_id)
+    class_index = get_class_index(gc_spreadsheet)
+
+    # STEP 2: resolve user input → canonical class
+    resolved = class_index.resolve(class_id)
+    if resolved is None:
+        raise ValueError(f"Unknown class: {class_id}")
+
+    class_id = resolved["resolved"]
 
     ws_progress = gc_spreadsheet.worksheet("progress")
     ws_classes = gc_spreadsheet.worksheet("classes")
