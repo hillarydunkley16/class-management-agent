@@ -55,17 +55,17 @@ def normalise_class_id(class_id: str) -> str:
 # ---------------------------
 # HELPERS (UNCHANGED LOGIC)
 # ---------------------------
-# def level_matches(curriculum_level: str, class_level: str) -> bool:
-#     curriculum_level = str(curriculum_level).strip().lower()
-#     class_level = str(class_level).strip().lower()
+def level_matches(curriculum_level: str, class_level: str) -> bool:
+    curriculum_level = str(curriculum_level).strip().lower()
+    class_level = str(class_level).strip().lower()
 
-#     if curriculum_level == "all":
-#         return True
+    if curriculum_level == "all":
+        return True
 
-#     levels = [
-#         x.strip()
-#         for x in curriculum_level.split("/")
-#     ]
+    levels = [
+        x.strip()
+        for x in curriculum_level.split("/")
+    ]
 
 
 def get_curriculum_lesson(curriculum_records, lesson_number, class_level):
