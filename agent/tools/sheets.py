@@ -19,7 +19,20 @@ credentials = Credentials.from_service_account_info(
     scopes=SCOPES
 )
 gc = gspread.authorize(credentials)
+_sheet_cache = {}
+def get_records_cached(spreadsheet_id: str, worksheet_name: str): 
+    key = (spreadsheet_id, worksheet_name)
 
+    if key not in _sheet_cache: 
+        spreadsheet = gc.open_by_key(spreadsheet_id)
+        worksheet = spreadsheet.worksheet(worksheet_name)
+        print(f"FETCHING {worksheet_name} FROM GOOGLE")
+
+        _sheet_cache[key] = worksheet.get_all_records()
+
+    return _sheet_cache[key]
+
+        
 
 def normalise_class_id(class_id: str) -> str:
     """
@@ -67,6 +80,8 @@ def level_matches(curriculum_level: str, class_level: str) -> bool:
         for x in curriculum_level.split("/")
     ]
 
+    return class_level in levels
+
 
 def get_curriculum_lesson(curriculum_records, lesson_number, class_level):
     for row in curriculum_records:
@@ -89,23 +104,28 @@ def get_curriculum_lesson(curriculum_records, lesson_number, class_level):
 
 
 def _get_class_progress(spreadsheet_id: str, class_id: str):
-    gc_spreadsheet = gc.open_by_key(spreadsheet_id)
+   
 
     class_id = normalise_class_id(class_id)
-    ws = gc_spreadsheet.worksheet("progress")
-    records = ws.get_all_records()
+    all_records = get_records_cached(
+    spreadsheet_id,
+    "progress",
+    )
+    
 
-    return [r for r in records if r.get("class_id") == class_id]
+    return [r for r in all_records if r.get("class_id") == class_id]
 
 
 def _get_assignments(spreadsheet_id: str, class_id: str):
-    gc_spreadsheet = gc.open_by_key(spreadsheet_id)
+    
 
     class_id = normalise_class_id(class_id)
-    ws = gc_spreadsheet.worksheet("assignments")
-    records = ws.get_all_records()
+    all_records = get_records_cached(
+    spreadsheet_id,
+    "assignments",
+    )
 
-    return [r for r in records if r.get("class_id") == class_id]
+    return [r for r in all_records if r.get("class_id") == class_id]
 
 
 # ---------------------------
@@ -138,13 +158,20 @@ def get_next_lesson(
 
     class_id = normalise_class_id(class_id)
 
-    ws_progress = gc_spreadsheet.worksheet("progress")
-    ws_classes = gc_spreadsheet.worksheet("classes")
-    ws_curriculum = gc_spreadsheet.worksheet("curriculum")
+    progress_records = get_records_cached(
+    spreadsheet_id,
+    "progress"
+)
 
-    progress_records = ws_progress.get_all_records()
-    class_records = ws_classes.get_all_records()
-    curriculum_records = ws_curriculum.get_all_records()
+    class_records = get_records_cached(
+        spreadsheet_id,
+        "classes"
+    )
+
+    curriculum_records = get_records_cached(
+        spreadsheet_id,
+        "curriculum"
+    )
 
     class_progress = next(
         (r for r in progress_records if r["class_id"] == class_id),
@@ -230,9 +257,10 @@ def update_progress(class_id: str, spreadsheet_id: str, updates: dict):
     
 
     class_id = normalise_class_id(class_id)
-
     ws = gc_spreadsheet.worksheet("progress")
     rows = ws.get_all_records()
+
+    
 
     row_index = next(
         (i for i, r in enumerate(rows, start=2)
@@ -254,9 +282,11 @@ def update_progress(class_id: str, spreadsheet_id: str, updates: dict):
 
     for field, value in updates.items():
         ws.update_cell(row_index, col_index(field), value)
-
+    _sheet_cache.pop((spreadsheet_id, "progress"), None)
     return f"Updated {class_id}: {updates}"
-
+@tool 
+def assignment_overview(spreadsheet_id: str):
+    """Gives an overview of the assignment spreadsheet"""
 
 @tool
 def update_assignment(spreadsheet_id: str, class_id: str, updates: dict):
@@ -288,5 +318,5 @@ def update_assignment(spreadsheet_id: str, class_id: str, updates: dict):
 
     for field, value in updates.items():
         ws.update_cell(row_index, col_index(field), value)
-
+    _sheet_cache.pop((spreadsheet_id, "assignments"), None)
     return f"Updated assignment {class_id}: {updates}"
