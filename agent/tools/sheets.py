@@ -21,6 +21,7 @@ credentials = Credentials.from_service_account_info(
 gc = gspread.authorize(credentials)
 _sheet_cache = {}
 def get_records_cached(spreadsheet_id: str, worksheet_name: str): 
+    print(f"GETTING RECORDS FOR {worksheet_name}")
     key = (spreadsheet_id, worksheet_name)
 
     if key not in _sheet_cache: 
