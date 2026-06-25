@@ -24,11 +24,13 @@ def get_records_cached(spreadsheet_id: str, worksheet_name: str):
     key = (spreadsheet_id, worksheet_name)
 
     if key not in _sheet_cache: 
+        print("CACHE MISS:", worksheet_name)
         spreadsheet = gc.open_by_key(spreadsheet_id)
         worksheet = spreadsheet.worksheet(worksheet_name)
         print(f"FETCHING {worksheet_name} FROM GOOGLE")
-
         _sheet_cache[key] = worksheet.get_all_records()
+    else: 
+        print("CACHE HIT: ", key)
 
     return _sheet_cache[key]
 
@@ -136,7 +138,7 @@ def _get_assignments(spreadsheet_id: str, class_id: str):
 def class_info(spreadsheet_id: str, class_id: str) -> list:
     """Returns the class info of a given class"""
     # gc_spreadsheet = gc.open_by_key(spreadsheet_id)
-
+    print("TOOL CALLED: CLASS INFO")
     class_id = normalise_class_id(class_id)
 
     progress = _get_class_progress(spreadsheet_id, class_id)
@@ -154,7 +156,7 @@ def get_next_lesson(
 ):
     """Gets the next lesson in a curriculum of a given class. There are 10 lessons in the curriculum. If a class level is not appropriate, still suggest a lesson."""
 
-    gc_spreadsheet = gc.open_by_key(spreadsheet_id)
+    print("TOOL CALLED: GET NEXT LESSON")
 
     class_id = normalise_class_id(class_id)
 
@@ -253,6 +255,7 @@ def get_next_lesson(
 @tool
 def update_progress(class_id: str, spreadsheet_id: str, updates: dict):
     """Updates the progress of a given class"""
+    print("CALLING TOOL: UPDATE_PROGRESS")
     gc_spreadsheet = gc.open_by_key(spreadsheet_id)
     
 
@@ -291,6 +294,7 @@ def assignment_overview(spreadsheet_id: str):
 @tool
 def update_assignment(spreadsheet_id: str, class_id: str, updates: dict):
     """Updates an assignment of a given class"""
+    print("CALLING TOOL: UPDATE ASSIGNMENT")
     gc_spreadsheet = gc.open_by_key(spreadsheet_id)
 
     class_id = normalise_class_id(class_id)
