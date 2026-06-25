@@ -325,3 +325,59 @@ def update_assignment(spreadsheet_id: str, class_id: str, updates: dict):
         ws.update_cell(row_index, col_index(field), value)
     _sheet_cache.pop((spreadsheet_id, "assignments"), None)
     return f"Updated assignment {class_id}: {updates}"
+# @tool
+# def get_schedule_for_date(date: date, spreadsheet_id: str):
+#     """Fetches the schedule for a given date"""
+#     all_records = get_records_cached(
+#         spreadsheet_id, 
+#         "schedule"
+#     )
+#     date = date_to_week_range(date, all_records)
+
+#     return 
+
+from datetime import datetime
+from collections import defaultdict
+
+@tool
+def get_schedule_for_date(query_date: str, spreadsheet_id: str):
+    """
+    Returns the scheduled classes for a specific date (YYYY-MM-DD format).
+    Infers the week range from the schedule sheet's existing week labels,
+    then filters to the matching day. Prefers 'updated' version rows over
+    'original' on a per-time-slot basis when both exist for the same week.
+    """
+    date_obj = datetime.strptime(query_date, "%Y-%m-%d").date()
+
+    all_records = get_records_cached(spreadsheet_id, "schedule")
+
+    result = date_to_week_range(date_obj, all_records)
+    if not result:
+        return [{"error": f"No schedule data found covering {query_date}"}]
+
+    month, week = result
+    day_name = date_obj.strftime("%A").upper()
+
+    # Filter to matching month/week/day
+    matches = [
+        r for r in all_records
+        if r["month"] == month
+        and r["week"] == week
+        and r["day"] == day_name
+    ]
+
+    # Prefer 'updated' over 'original' PER TIME SLOT, not for the whole day —
+    # otherwise one updated row anywhere wipes out every other valid original row
+    by_slot = defaultdict(list)
+    for r in matches:
+        by_slot[(r["time_start"], r["time_end"])].append(r)
+
+    resolved = []
+    for slot_rows in by_slot.values():
+        updated_rows = [r for r in slot_rows if r["version"] == "updated"]
+        resolved.extend(updated_rows if updated_rows else slot_rows)
+
+    # Drop prep/off slots — only return actual classes
+    classes = [r for r in resolved if r["class_id"]]
+
+    return classes if classes else [{"info": f"No classes scheduled on {query_date}"}]
