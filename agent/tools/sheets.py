@@ -291,6 +291,19 @@ def update_progress(class_id: str, spreadsheet_id: str, updates: dict):
 @tool 
 def assignment_overview(spreadsheet_id: str):
     """Gives an overview of the assignment spreadsheet"""
+    
+@tool
+def add_assignment(spreadsheet_id: str, class_id: str, assignment_type: str, context: str, status: str, due_date: str):
+    """Adds an assignment to the assignment sheet
+    class_id	lesson_number	assignment_type	context	status	due_date	note
+     """
+    print("CALLING TOOL: ADD ASSIGNMENT")
+    gc_spreadsheet = gc.open_by_key(spreadsheet_id) 
+    ws = gc_spreadsheet.worksheet("assignments")
+    info = _get_class_progress(spreadsheet_id, class_id)
+    
+    ws.append_row([class_id, info[0].get("lesson_number"), assignment_type, context, status, due_date, ""])
+
 
 @tool
 def update_assignment(spreadsheet_id: str, class_id: str, updates: dict):
