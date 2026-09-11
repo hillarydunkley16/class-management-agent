@@ -13,6 +13,7 @@ def date_to_week_range(query_date: date, schedule_rows: list[dict]) -> tuple[str
     Infer which (month, week) range a date falls in by parsing the week
     labels that already exist in the schedule data.
     """
+    
     month_name = query_date.strftime("%B")
     day_num = query_date.day
 
@@ -31,3 +32,4 @@ def date_to_week_range(query_date: date, schedule_rows: list[dict]) -> tuple[str
                 return month_name, label
 
     return None
+
