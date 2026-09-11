@@ -35,7 +35,7 @@ except Exception:
 #         _class_index = ClassIndex(class_list)
 
 #     return _class_index                      
-tools = [ sh.class_info, sh.update_progress, sh.get_next_lesson, sh.update_assignment, sh.get_schedule_for_date]
+tools = [ sh.class_info, sh.update_progress, sh.get_next_lesson, sh.update_assignment, sh.get_schedule_for_date, sh.add_assignment]
 
 model = ChatOpenAI(model="gpt-4o", api_key = st.secrets["OPENAI_API_KEY"], temperature=0)
 model_with_tools = model.bind_tools(tools)
