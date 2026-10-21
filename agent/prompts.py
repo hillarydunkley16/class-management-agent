@@ -1,0 +1,2 @@
+def prompts():
+    return

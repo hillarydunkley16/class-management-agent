@@ -1,0 +1,7 @@
+streamlit
+langchain-core
+langchain-openai
+langgraph
+gspread
+google-auth
+python-dotenv
